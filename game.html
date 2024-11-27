@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESL Word Matching Game - Team Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .instructions {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 1rem;
+            margin: 1rem;
+            border-radius: 4px;
+        }
+
+        .controls {
+            background-color: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .game-container {
+            flex-grow: 1;
+            padding: 2rem;
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+            width: 45%;
+        }
+
+        .grid-label {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+        }
+
+        .tile {
+            background-color: white;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .tile.selected {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .tile.matched {
+            background-color: #2ecc71;
+            border-color: #27ae60;
+            color: white;
+            cursor: default;
+        }
+
+        .tile.team1-matched {
+            background-color: #e74c3c;
+            border-color: #c0392b;
+            color: white;
+        }
+
+        .tile.team2-matched {
+            background-color: #9b59b6;
+            border-color: #8e44ad;
+            color: white;
+        }
+
+        .score-board {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            padding: 1rem;
+            background-color: white;
+            margin: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .team-score {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .team1 {
+            color: #e74c3c;
+        }
+
+        .team2 {
+            color: #9b59b6;
+        }
+
+        .button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .button:hover {
+            background-color: #2980b9;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .fullscreen-button {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1000;
+        }
+
+        .current-team {
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 1200px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .word-grid {
+                width: 100%;
+                max-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ESL Word Matching Game - Team Edition</h1>
+    </div>
+    
+    <div class="instructions">
+        <p><strong>CSV Format:</strong> Create a file with two columns - English words in the first column, translations in the second. No header row needed.</p>
+        <p><strong>Example:</strong><br>
+        hello,hola<br>
+        goodbye,adiós<br>
+        thank you,gracias</p>
+    </div>
+
+    <div class="controls">
+        <div class="file-input-wrapper">
+            <button class="button">Load CSV File</button>
+            <input type="file" accept=".csv" id="csvFile">
+        </div>
+        <button class="button" id="newGameBtn">New Game</button>
+        <button class="button" id="switchTeamBtn">Switch Team</button>
+    </div>
+
+    <div class="score-board">
+        <div class="team-score team1">
+            <h3>Team 1</h3>
+            <span id="team1Score">0</span>
+        </div>
+        <div class="current-team" id="currentTeam">
+            Team 1's Turn
+        </div>
+        <div class="team-score team2">
+            <h3>Team 2</h3>
+            <span id="team2Score">0</span>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div>
+            <div class="grid-label">English Words</div>
+            <div class="word-grid" id="englishGrid"></div>
+        </div>
+        <div>
+            <div class="grid-label">Translations</div>
+            <div class="word-grid" id="translationGrid"></div>
+        </div>
+    </div>
+
+    <button class="button fullscreen-button" id="fullscreenBtn">Toggle Fullscreen</button>
+
+    <script>
+        class MatchingGame {
+            constructor() {
+                this.words = [];
+                this.selectedTile = null;
+                this.currentTeam = 1;
+                this.team1Score = 0;
+                this.team2Score = 0;
+                this.gridSize = 25; // 5x5 grid
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                document.getElementById('csvFile').addEventListener('change', this.handleFileUpload.bind(this));
+                document.getElementById('newGameBtn').addEventListener('click', () => this.shuffleAndDeal());
+                document.getElementById('switchTeamBtn').addEventListener('click', () => this.switchTeam());
+                document.getElementById('fullscreenBtn').addEventListener('click', this.toggleFullscreen.bind(this));
+            }
+
+            async handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const text = await file.text();
+                    Papa.parse(text, {
+                        complete: (results) => {
+                            this.words = results.data
+                                .filter(row => row.length >= 2 && row[0] && row[1])
+                                .map(row => ({
+                                    english: row[0].trim(),
+                                    translation: row[1].trim()
+                                }));
+                            this.shuffleAndDeal();
+                        }
+                    });
+                }
+            }
+
+            shuffleAndDeal() {
+                if (this.words.length === 0) {
+                    alert('Please load a CSV file first!');
+                    return;
+                }
+
+                // Reset scores and team
+                this.team1Score = 0;
+                this.team2Score = 0;
+                this.currentTeam = 1;
+                this.updateScores();
+                this.selectedTile = null;
+
+                // Select random subset of words if we have more than needed
+                let gameWords = [...this.words];
+                if (gameWords.length > this.gridSize) {
+                    gameWords = this.shuffleArray(gameWords).slice(0, this.gridSize);
+                }
+
+                // Create and shuffle English words
+                const englishTiles = gameWords.map(word => ({
+                    text: word.english,
+                    paired: word.translation
+                }));
+                this.shuffleArray(englishTiles);
+
+                // Create and shuffle translations
+                const translationTiles = gameWords.map(word => ({
+                    text: word.translation,
+                    paired: word.english
+                }));
+                this.shuffleArray(translationTiles);
+
+                // Display tiles
+                this.displayGrid('englishGrid', englishTiles);
+                this.displayGrid('translationGrid', translationTiles);
+                this.updateCurrentTeam();
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            displayGrid(gridId, tiles) {
+                const grid = document.getElementById(gridId);
+                grid.innerHTML = '';
+                tiles.forEach((tile, index) => {
+                    const tileElement = document.createElement('div');
+                    tileElement.className = 'tile';
+                    tileElement.textContent = tile.text;
+                    tileElement.dataset.paired = tile.paired;
+                    tileElement.addEventListener('click', () => this.handleTileClick(tileElement));
+                    grid.appendChild(tileElement);
+                });
+            }
+
+            handleTileClick(tile) {
+                if (tile.classList.contains('matched') || 
+                    tile.classList.contains('team1-matched') || 
+                    tile.classList.contains('team2-matched')) {
+                    return;
+                }
+
+                if (!this.selectedTile) {
+                    // First tile selection
+                    if (tile.classList.contains('selected')) {
+                        tile.classList.remove('selected');
+                        this.selectedTile = null;
+                    } else {
+                        tile.classList.add('selected');
+                        this.selectedTile = tile;
+                    }
+                } else {
+                    // Second tile selection - check for match
+                    if (this.selectedTile === tile) {
+                        // Clicked same tile twice
+                        tile.classList.remove('selected');
+                        this.selectedTile = null;
+                        return;
+                    }
+
+                    const isMatch = this.selectedTile.dataset.paired === tile.textContent && 
+                                  tile.dataset.paired === this.selectedTile.textContent;
+
+                    if (isMatch) {
+                        const matchClass = this.currentTeam === 1 ? 'team1-matched' : 'team2-matched';
+                        this.selectedTile.classList.remove('selected');
+                        this.selectedTile.classList.add(matchClass);
+                        tile.classList.add(matchClass);
+                        
+                        // Update score
+                        if (this.currentTeam === 1) {
+                            this.team1Score++;
+                        } else {
+                            this.team2Score++;
+                        }
+                        this.updateScores();
+                    } else {
+                        // No match - switch teams
+                        this.selectedTile.classList.remove('selected');
+                        this.switchTeam();
+                    }
+
+                    this.selectedTile = null;
+                }
+            }
+
+            switchTeam() {
+                this.currentTeam = this.currentTeam === 1 ? 2 : 1;
+                this.updateCurrentTeam();
+                if (this.selectedTile) {
+                    this.selectedTile.classList.remove('selected');
+                    this.selectedTile = null;
+                }
+            }
+
+            updateScores() {
+                document.getElementById('team1Score').textContent = this.team1Score;
+                document.getElementById('team2Score').textContent = this.team2Score;
+            }
+
+            updateCurrentTeam() {
+                const teamDisplay = document.getElementById('currentTeam');
+                teamDisplay.textContent = `Team ${this.currentTeam}'s Turn`;
+                teamDisplay.className = 'current-team ' + (this.currentTeam === 1 ? 'team1' : 'team2');
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        // Initialize the game
+        const game = new MatchingGame();
+    </script>
+</body>
+</html>
