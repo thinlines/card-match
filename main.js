@@ -41,23 +41,31 @@ const initialState = {
 
 // Core game state updates (pure functions)
 
-/** 
+/** @typedef {{state: GameState, deselect?: HTMLElement}} SelectCardResult */
+
+/**
 * Updates game state when a card is selected
 * @param {GameState} state - Current game state
 * @param {HTMLElement} card - Selected card element
-* @returns {GameState} Updated game state
+* @returns {SelectCardResult} Updated state and optional card to deselect
 */
 const selectCard = (state, card) => {
   const cardIndex = parseInt(card.dataset.index);
-  const isValidSelection = 
+  const cardSide = card.dataset.side;
+  if (state.selectedCards.length === 1) {
+    previousSelection = state.selectedCards[0];
+    if (cardSide === previousSelection.dataset.side) {
+      const newState = { ...state, selectedCards: [card] }
+      return { state: newState, deselect: previousSelection }
+    }
+  }
+  const isValidSelection =
       !state.matchedPairs.has(cardIndex) &&
-      state.selectedCards.length < 2 &&
-      !(state.selectedCards.length === 1 && 
-        state.selectedCards[0].dataset.side === card.dataset.side);
+      state.selectedCards.length < 2;
 
   return isValidSelection
-      ? { ...state, selectedCards: [...state.selectedCards, card] }
-      : state;
+    ? { state: {...state, selectedCards: [...state.selectedCards, card]} }
+    : { state }
 };
 
 /**
@@ -124,7 +132,7 @@ const shuffleArray = array => {
 * @param {number} count - Number of pairs to select
 * @returns {WordPair[]} Selected random pairs
 */
-const getRandomPairs = (allPairs, count) => 
+const getRandomPairs = (allPairs, count) =>
   shuffleArray([...allPairs]).slice(0, count);
 
 /**
@@ -132,7 +140,7 @@ const getRandomPairs = (allPairs, count) =>
 * @param {string} content - Raw CSV content
 * @returns {WordPair[]} Parsed word pairs
 */
-const parseCsvContent = content => 
+const parseCsvContent = content =>
   content.split('\n')
       .map(line => line.trim())
       .filter(line => line && line.includes(','))
@@ -147,7 +155,7 @@ const getNextTeam = (currentTeam) => currentTeam === 1 ? 2 : 1;
 
 /** @type {Object} UI update functions */
 const updateUI = {
-  /** 
+  /**
    * Updates card selection visual state
    * @param {HTMLElement} card - Card element
    * @param {boolean} isSelected - Whether card is selected
@@ -156,7 +164,7 @@ const updateUI = {
       card.classList.toggle('selected', isSelected);
   },
 
-  /** 
+  /**
    * Updates matched cards visual state
    * @param {HTMLElement[]} cards - Matched card elements
    */
@@ -214,24 +222,25 @@ const createCard = (word, index, isEnglish) => {
   card.textContent = word;
   card.dataset.index = index;
   card.dataset.side = isEnglish ? 'english' : 'translation';
-  
+
   card.addEventListener('click', () => {
-      const newState = selectCard(gameState, card);
+      const { state: newState, deselect } = selectCard(gameState, card);
+      if (deselect) updateUI.cardSelection(deselect, false);
       if (newState === gameState) return;
-      
+
       gameState = newState;
       updateUI.cardSelection(card, true);
-      
+
       if (gameState.selectedCards.length === 2) {
           const matchState = checkMatch(gameState);
-          
+
           if (matchState.matchedPairs.size > gameState.matchedPairs.size) {
               updateUI.matchedPair(gameState.selectedCards);
               updateUI.score(gameState.currentTeam, matchState.scores[`team${gameState.currentTeam}`]);
-              
+
               if (matchState.matchedPairs.size === gameState.WORDS_PER_GAME) {
                   const winner = matchState.scores.team1 > matchState.scores.team2 ? 'Team 1' :
-                               matchState.scores.team1 < matchState.scores.team2 ? 'Team 2' : 
+                               matchState.scores.team1 < matchState.scores.team2 ? 'Team 2' :
                                'It\'s a tie';
                   setTimeout(() => alert(`Game Over! ${winner} wins!`), 500);
               }
@@ -239,11 +248,11 @@ const createCard = (word, index, isEnglish) => {
               gameState.selectedCards.forEach(card => updateUI.cardSelection(card, false));
               updateUI.teamTurn(matchState.currentTeam);
           }
-          
+
           gameState = matchState;
       }
   });
-  
+
   return card;
 };
 
@@ -257,11 +266,11 @@ const setupNewGame = (wordPairs = []) => {
 
   const allPairs = wordPairs.length ? wordPairs : samplePairs;
   const currentGamePairs = getRandomPairs(allPairs, gameState.WORDS_PER_GAME);
-  
+
   ['english', 'translation'].forEach((side, sideIndex) => {
       const grid = document.getElementById(`${side}Grid`);
       const shuffledIndices = shuffleArray([...Array(gameState.WORDS_PER_GAME).keys()]);
-      
+
       shuffledIndices.forEach(index => {
           const word = currentGamePairs[index][sideIndex];
           grid.appendChild(createCard(word, index, side === 'english'));
@@ -281,7 +290,7 @@ document.getElementById('csvInput').addEventListener('change', async (e) => {
           reader.onerror = e => reject(e);
           reader.readAsText(file);
       });
-      
+
       const wordPairs = parseCsvContent(text);
       setupNewGame(wordPairs);
   } catch (error) {
