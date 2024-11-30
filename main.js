@@ -8,21 +8,21 @@ const WORDS_PER_GAME = 9;  // 3x3 grid
 
 // Sample word pairs for initial demo
 const samplePairs = [
-    ['Christmas', '圣诞的'],
-    ['story', '故事'],
-    ['pick', '选择'],
-    ['let', '让'],
-    ['cool', '凉爽的'],
-    ['available', '可用的'],
-    ['now', '现在'],
-    ['ever', '曾经'],
-    ['young', '年轻'],
-    ['wall', '墙'],
-    ['health', '健康'],
-    ['month', '月份'],
-    ['difference', '差异'],
-    ['economic', '经济的'],
-    ['beginning', '开始']
+  ['house', 'casa'],
+  ['water', 'água'],
+  ['friend', 'amigo'],
+  ['book', 'livro'],
+  ['cat', 'gato'],
+  ['dog', 'cachorro'],
+  ['bread', 'pão'],
+  ['milk', 'leite'],
+  ['coffee', 'café'],
+  ['sun', 'sol'],
+  ['moon', 'lua'],
+  ['beach', 'praia'],
+  ['tree', 'árvore'],
+  ['food', 'comida'],
+  ['door', 'porta']
 ];
 
 function shuffleArray(array) {
