@@ -11,6 +11,7 @@
  * @property {number} WORDS_PER_GAME - Number of word pairs per game
  * @property {number} TIMER_DURATION - How long each student has to find matches
  * @property {number} ROUNDS_PER_GAME - The number of rounds per game
+ * @property {'team'|'individual'} mode - The current game mode
  */
 
 let timerInterval = null;
@@ -52,6 +53,7 @@ const initialState = {
 // Settings
 
 let settingsState = {
+  mode: "team",
   rounds: 2,
   timer: 15
 };
@@ -87,14 +89,18 @@ saveButton.addEventListener('click', () => {
       ...gameState,
       ROUNDS_PER_GAME: settingsState.rounds,
       TIMER_DURATION: settingsState.timer,
-      timeRemaining: settingsState.timer
+      timeRemaining: settingsState.timer,
+      mode: settingsState.mode,
+
   };
   
   // Update UI
   updateUI.timer(gameState.timeRemaining);
   const roundMessage = `Round ${gameState.currentRound + 1} of ${gameState.ROUNDS_PER_GAME}`;
   document.getElementById("currentRound").textContent = roundMessage;
-  
+
+  updateUI.teamFeatures(gameState.mode === "team");
+
   modal.style.display = 'none';
 });
 
@@ -128,6 +134,19 @@ document.querySelectorAll('.control-btn').forEach(button => {
   });
 });
 
+document.querySelectorAll('.mode-btn').forEach((button) => {
+  button.addEventListener('click', () => {
+    const isSelected = button.classList.contains('active')
+    if (!isSelected) {
+      updateUI.mode(button);
+      settingsState.mode = button.dataset.mode;
+      // Toggle visibility of team settings
+      const modalContent = document.querySelector('.modal-content');
+      modalContent.classList.toggle('individual-mode', settingsState.mode === 'individual');
+    }
+  })
+})
+
 // Update display values
 function updateDisplays() {
   roundsDisplay.textContent = settingsState.rounds;
@@ -148,7 +167,9 @@ function updateDisplays() {
 const selectCard = (state, card) => {
   const cardIndex = parseInt(card.dataset.index);
   const cardSide = card.dataset.side;
-  if (!timerInterval) startTimer();
+  const isTeamMode = state.mode === "team";
+
+  if (isTeamMode && !timerInterval) startTimer();
   if (state.selectedCards.length === 1) {
     previousSelection = state.selectedCards[0];
     if (cardSide === previousSelection.dataset.side) {
@@ -299,6 +320,8 @@ const formatTime = (time) => {
  * UI update functions
  * @typedef {Object} UIUpdate
  * @property {function(HTMLElement, boolean): void} cardSelection Updates card selection visual state
+ * @property {function(HTMLElement, boolean): void} mode Updates settings game mode visual state
+ * @property {function(boolean): void} teamFeatures Toggles team features on and off
  * @property {function(HTMLElement[]): void} matchedPair Updates matched cards visual state
  * @property {function(1|2): void} teamTurn Updates current team turn indicator
  * @property {function(1|2, number): void} score Updates team score display
@@ -315,6 +338,22 @@ const updateUI = {
    */
   cardSelection: (card, isSelected) => {
     card.classList.toggle("selected", isSelected);
+  },
+
+  /**
+   * Shows a mode as activated or not
+   * @param {HTMLElement} button the mode button that was clicked
+   */
+  mode: (button) => {
+    document.querySelectorAll('.mode-btn').forEach((one) => one.classList.remove('active'))
+    button.classList.toggle('active', true)
+  },
+
+  teamFeatures: (shouldShow) => {
+    const shouldHide = !shouldShow;
+    document.querySelectorAll('.team').forEach(
+      (ele) => ele.classList.toggle('hidden', shouldHide)
+    );
   },
 
   /**
@@ -397,6 +436,8 @@ const createCard = (word, index, isEnglish) => {
   card.dataset.index = index;
   card.dataset.side = isEnglish ? "english" : "translation";
 
+  const isTeamMode = gameState.mode === "team";
+
   card.addEventListener("click", () => {
     const { state: newState, deselect } = selectCard(gameState, card);
     if (deselect) updateUI.cardSelection(deselect, false);
@@ -405,7 +446,7 @@ const createCard = (word, index, isEnglish) => {
     gameState = newState;
     updateUI.cardSelection(card, true);
 
-    if (!timerInterval) startTimer();
+    if (isTeamMode && !timerInterval) startTimer();
 
     if (gameState.selectedCards.length === 2) {
       const matchState = checkMatch(gameState);
@@ -415,24 +456,29 @@ const createCard = (word, index, isEnglish) => {
       if (matchState.matchedPairs.size > gameState.matchedPairs.size) {
         // Handle successful match
         updateUI.matchedPair(gameState.selectedCards);
-        updateUI.score(
-          gameState.currentTeam,
-          matchState.scores[`team${gameState.currentTeam}`]
-        );
+        if (isTeamMode) {
+          updateUI.score(
+            gameState.currentTeam,
+            matchState.scores[`team${gameState.currentTeam}`]
+          );  
+        }
 
         if (gameOver) {
-          // Handle game over
-          const winner =
-            matchState.scores.team1 > matchState.scores.team2
-              ? "Team 1"
-              : matchState.scores.team1 < matchState.scores.team2
-              ? "Team 2"
-              : "It's a tie";
-          stopTimer();
-          setTimeout(() => alert(`Game Over! ${winner} wins!`), 500);
+          if (isTeamMode) {
+            // Handle game over
+            const winner =
+              matchState.scores.team1 > matchState.scores.team2
+                ? "Team 1"
+                : matchState.scores.team1 < matchState.scores.team2
+                ? "Team 2"
+                : "It's a tie";
+            stopTimer();
+            setTimeout(() => alert(`Game Over! ${winner} wins!`), 500);
+          } else {
+            setTimeout(() => alert("Congratulations! You've finished all the matches!"), 500);
+          }
         } else if (boardIsFinished) {
-          // Handle round completion
-          stopTimer();
+          if (isTeamMode) stopTimer();
           const nextRoundState = advanceRound(matchState);
 
           // Show round transition message
@@ -440,17 +486,26 @@ const createCard = (word, index, isEnglish) => {
           document.getElementById("currentRound").textContent = roundMessage;
 
           setTimeout(() => {
-            // Reset timer for new round
-            const stateWithResetTimer = switchTeam(resetTimer(nextRoundState));
-            // Setup new board and update global state after board is set up
-            setupNewBoard(stateWithResetTimer);
+            if (isTeamMode) {
+              // Reset timer for new round
+              const stateWithResetTimer = switchTeam(resetTimer(nextRoundState));
+              // Setup new board and update global state after board is set up
+              setupNewBoard(stateWithResetTimer);
 
-            gameState = {
-              ...stateWithResetTimer,
-              matchedPairs: new Set(), // Ensure matchedPairs is empty for new round
-              selectedCards: []
-            };
-            updateUI.teamTurn(gameState.currentTeam);
+              gameState = {
+                ...stateWithResetTimer,
+                matchedPairs: new Set(), // Ensure matchedPairs is empty for new round
+                selectedCards: []
+              };
+              updateUI.teamTurn(gameState.currentTeam);
+            } else {
+              setupNewBoard(gameState);
+              gameState = {
+                ...gameState,
+                matchedPairs: new Set(),
+                selectedCards: []
+              }                
+            }
           }, 1000);
         }
       } else {
@@ -458,7 +513,7 @@ const createCard = (word, index, isEnglish) => {
         gameState.selectedCards.forEach((card) =>
           updateUI.cardSelection(card, false)
         );
-        updateUI.teamTurn(matchState.currentTeam);
+        if (isTeamMode) updateUI.teamTurn(matchState.currentTeam);
       }
 
       gameState = matchState;

@@ -17,25 +17,25 @@
                     Load CSV File
                 </button>
                 <button class="btn btn-green" id="newGameButton">New Game</button>
-                <button class="btn btn-purple" id="switchTeamButton">Switch Team</button>
+                <button class="btn btn-purple team" id="switchTeamButton">Switch Team</button>
                 <button class="btn btn-orange" id="settingsButton">
                   Settings
               </button>
             </div>
 
             <div class="score-board">
-                <div class="team-score team1 active">
+                <div class="team team-score team1 active">
                     <h2>Team 1</h2>
                     <div class="score" id="team1Score">0</div>
                 </div>
 
                 <div class="current-team">
-                    <div id="currentTeam">Team 1's Turn</div>
+                    <div class="team" id="currentTeam">Team 1's Turn</div>
+                    <div class="team timer" id="timer">00:30</div>
                     <div id="currentRound"></div>
-                    <div class="timer" id="timer">00:30</div>
                 </div>
 
-                <div class="team-score team2">
+                <div class="team team-score team2">
                     <h2>Team 2</h2>
                     <div class="score" id="team2Score">0</div>
                 </div>
@@ -76,7 +76,7 @@
               </div>
           </div>
 
-          <div class="setting-group team-setting">
+          <div class="setting-group">
               <label>Rounds per Game</label>
               <div class="number-control">
                   <button class="control-btn minus" data-setting="rounds">−</button>
