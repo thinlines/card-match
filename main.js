@@ -156,10 +156,13 @@ const getNextTeam = (currentTeam) => currentTeam === 1 ? 2 : 1;
 * @param {GameState} state - Current game state
 * @returns {GameState} Updated game state with next team
 */
-const switchTeam = (state) => ({
-  ...state,
-  currentTeam: getNextTeam(state.currentTeam)
-});
+const switchTeam = (state) => {
+  const newState = resetTimer(state);
+  return ({
+    ...newState,
+    currentTeam: getNextTeam(state.currentTeam)
+  });
+};
 
 /**
  * Starts the timer, setting an interval which modifies gameState directly
