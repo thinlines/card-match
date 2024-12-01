@@ -38,6 +38,7 @@ const samplePairs = [
 
 /** @type {GameState} */
 const initialState = {
+  mode: "team",
   currentTeam: 1,
   scores: { team1: 0, team2: 0 },
   selectedCards: [],
