@@ -271,6 +271,7 @@ const switchTeam = (state) => {
   const newState = resetTimer(state);
   return {
     ...newState,
+    selectedCards: [],
     currentTeam: getNextTeam(state.currentTeam),
   };
 };
@@ -283,6 +284,7 @@ const startTimer = () => {
     gameState.timeRemaining--;
     updateUI.timer(gameState.timeRemaining);
     if (gameState.timeRemaining <= 0) {
+      gameState.selectedCards.forEach((card) => updateUI.cardSelection(card, false));
       gameState = switchTeam(resetTimer(gameState));
       updateUI.teamTurn(gameState.currentTeam);
     }
