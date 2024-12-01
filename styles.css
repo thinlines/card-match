@@ -234,3 +234,104 @@ h1 {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+.btn-orange {
+  background-color: #f97316;
+}
+.btn-orange:hover {
+  background-color: #ea580c;
+}
+
+.btn-gray {
+  background-color: #64748b;
+  color: white;
+}
+.btn-gray:hover {
+  background-color: #475569;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.modal-content {
+  position: relative;
+  background-color: white;
+  margin: 5vh auto;
+  padding: 2rem;
+  width: 90%;
+  max-width: 600px;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal h2 {
+  font-size: 2rem;
+  color: #1e293b;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.setting-group {
+  margin-bottom: 2rem;
+}
+
+.setting-group label {
+  display: block;
+  font-size: 1.5rem;
+  color: #475569;
+  margin-bottom: 1rem;
+}
+
+.number-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.control-btn {
+  width: 4rem;
+  height: 4rem;
+  font-size: 2rem;
+  border: none;
+  border-radius: 1rem;
+  background-color: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.control-btn:hover {
+  background-color: #e2e8f0;
+}
+
+.control-btn:active {
+  background-color: #cbd5e1;
+}
+
+.number-display {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #1e293b;
+  min-width: 4rem;
+  text-align: center;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.modal-footer .btn {
+  font-size: 1.5rem;
+  padding: 1rem 2rem;
+}

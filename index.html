@@ -18,6 +18,9 @@
                 </button>
                 <button class="btn btn-green" id="newGameButton">New Game</button>
                 <button class="btn btn-purple" id="switchTeamButton">Switch Team</button>
+                <button class="btn btn-orange" id="settingsButton">
+                  Settings
+              </button>
             </div>
 
             <div class="score-board">
@@ -51,7 +54,36 @@
             </div>
         </div>
     </div>
+    <div id="settingsModal" class="modal">
+      <div class="modal-content">
+          <h2>Game Settings</h2>
+          
+          <div class="setting-group">
+              <label>Rounds per Game</label>
+              <div class="number-control">
+                  <button class="control-btn minus" data-setting="rounds">−</button>
+                  <span class="number-display" id="roundsDisplay">2</span>
+                  <button class="control-btn plus" data-setting="rounds">+</button>
+              </div>
+          </div>
+  
+          <div class="setting-group">
+              <label>Timer Duration (seconds)</label>
+              <div class="number-control">
+                  <button class="control-btn minus" data-setting="timer">−</button>
+                  <span class="number-display" id="timerDisplay">15</span>
+                  <button class="control-btn plus" data-setting="timer">+</button>
+              </div>
+          </div>
+  
+          <div class="modal-footer">
+              <button class="btn btn-green" id="saveSettings">Save Changes</button>
+              <button class="btn btn-gray" id="cancelSettings">Cancel</button>
+          </div>
+      </div>
+  </div>
 
+    <script src="settings.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
