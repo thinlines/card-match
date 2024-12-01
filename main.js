@@ -93,7 +93,7 @@ saveButton.addEventListener('click', () => {
       mode: settingsState.mode,
 
   };
-  
+
   // Update UI
   updateUI.timer(gameState.timeRemaining);
   const roundMessage = `Round ${gameState.currentRound + 1} of ${gameState.ROUNDS_PER_GAME}`;
@@ -121,14 +121,14 @@ document.querySelectorAll('.control-btn').forEach(button => {
       const setting = button.dataset.setting;
       const isPlus = button.classList.contains('plus');
       const { min, max, step } = constraints[setting];
-      
+
       let newValue = settingsState[setting];
       if (isPlus) {
           newValue = Math.min(newValue + step, max);
       } else {
           newValue = Math.max(newValue - step, min);
       }
-      
+
       settingsState[setting] = newValue;
       updateDisplays();
   });
@@ -453,6 +453,8 @@ const createCard = (word, index, isEnglish) => {
       const boardIsFinished = matchState.matchedPairs.size === gameState.WORDS_PER_GAME;
       const gameOver = matchState.currentRound >= gameState.ROUNDS_PER_GAME - 1 && boardIsFinished;
 
+      // Inside the card click event listener, replace the if (matchState.matchedPairs.size > gameState.matchedPairs.size) block with:
+
       if (matchState.matchedPairs.size > gameState.matchedPairs.size) {
         // Handle successful match
         updateUI.matchedPair(gameState.selectedCards);
@@ -460,33 +462,36 @@ const createCard = (word, index, isEnglish) => {
           updateUI.score(
             gameState.currentTeam,
             matchState.scores[`team${gameState.currentTeam}`]
-          );  
+          );
         }
 
         if (gameOver) {
           if (isTeamMode) {
-            // Handle game over
+            stopTimer();
+            // Handle team mode game over
             const winner =
               matchState.scores.team1 > matchState.scores.team2
                 ? "Team 1"
                 : matchState.scores.team1 < matchState.scores.team2
                 ? "Team 2"
                 : "It's a tie";
-            stopTimer();
             setTimeout(() => alert(`Game Over! ${winner} wins!`), 500);
           } else {
-            setTimeout(() => alert("Congratulations! You've finished all the matches!"), 500);
+            // Handle individual mode game over
+            setTimeout(() => {
+              alert("Game Over! You've completed all rounds!");
+            }, 500);
           }
         } else if (boardIsFinished) {
-          if (isTeamMode) stopTimer();
-          const nextRoundState = advanceRound(matchState);
+          if (isTeamMode) {
+            stopTimer();
+            const nextRoundState = advanceRound(matchState);
 
-          // Show round transition message
-          const roundMessage = `Round ${nextRoundState.currentRound + 1} of ${nextRoundState.ROUNDS_PER_GAME}`;
-          document.getElementById("currentRound").textContent = roundMessage;
+            // Show round transition message
+            const roundMessage = `Round ${nextRoundState.currentRound + 1} of ${nextRoundState.ROUNDS_PER_GAME}`;
+            document.getElementById("currentRound").textContent = roundMessage;
 
-          setTimeout(() => {
-            if (isTeamMode) {
+            setTimeout(() => {
               // Reset timer for new round
               const stateWithResetTimer = switchTeam(resetTimer(nextRoundState));
               // Setup new board and update global state after board is set up
@@ -494,19 +499,28 @@ const createCard = (word, index, isEnglish) => {
 
               gameState = {
                 ...stateWithResetTimer,
-                matchedPairs: new Set(), // Ensure matchedPairs is empty for new round
+                matchedPairs: new Set(),
                 selectedCards: []
               };
               updateUI.teamTurn(gameState.currentTeam);
-            } else {
-              setupNewBoard(gameState);
+            }, 1000);
+          } else {
+            // Handle individual mode round advance
+            const nextRoundState = advanceRound(matchState);
+
+            // Show round transition message
+            const roundMessage = `Round ${nextRoundState.currentRound + 1} of ${nextRoundState.ROUNDS_PER_GAME}`;
+            document.getElementById("currentRound").textContent = roundMessage;
+
+            setTimeout(() => {
+              setupNewBoard(nextRoundState);
               gameState = {
-                ...gameState,
+                ...nextRoundState,
                 matchedPairs: new Set(),
                 selectedCards: []
-              }                
-            }
-          }, 1000);
+              };
+            }, 1000);
+          }
         }
       } else {
         // Handle unsuccessful match
