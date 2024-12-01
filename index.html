@@ -10,7 +10,7 @@
     <div class="container">
         <div class="header">
             <h1>ESL Word Matching Game - Team Edition</h1>
-            
+
             <div class="controls">
                 <input type="file" id="csvInput" accept=".csv">
                 <button class="btn btn-blue" onclick="document.getElementById('csvInput').click()">
@@ -57,8 +57,26 @@
     <div id="settingsModal" class="modal">
       <div class="modal-content">
           <h2>Game Settings</h2>
-          
+
           <div class="setting-group">
+              <label>Game Mode</label>
+              <div class="mode-selector">
+                  <button class="mode-btn active" data-mode="team">
+                      <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      Team Mode
+                  </button>
+                  <button class="mode-btn" data-mode="individual">
+                      <svg class="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Individual Mode
+                  </button>
+              </div>
+          </div>
+
+          <div class="setting-group team-setting">
               <label>Rounds per Game</label>
               <div class="number-control">
                   <button class="control-btn minus" data-setting="rounds">−</button>
@@ -66,8 +84,8 @@
                   <button class="control-btn plus" data-setting="rounds">+</button>
               </div>
           </div>
-  
-          <div class="setting-group">
+
+          <div class="setting-group team-setting">
               <label>Timer Duration (seconds)</label>
               <div class="number-control">
                   <button class="control-btn minus" data-setting="timer">−</button>
@@ -75,7 +93,7 @@
                   <button class="control-btn plus" data-setting="timer">+</button>
               </div>
           </div>
-  
+
           <div class="modal-footer">
               <button class="btn btn-green" id="saveSettings">Save Changes</button>
               <button class="btn btn-gray" id="cancelSettings">Cancel</button>
