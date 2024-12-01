@@ -156,7 +156,7 @@ h1 {
 }
 
 .word-card {
-    aspect-ratio: 1;
+    aspect-ratio: 4 / 3;
     background: white;
     border: none;
     border-radius: 0.75rem;
