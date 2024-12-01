@@ -192,7 +192,6 @@ const checkMatch = (state) => {
 
   return {
     ...state,
-    currentTeam: state.currentTeam === 1 ? 2 : 1,
     selectedCards: [],
   };
 };
