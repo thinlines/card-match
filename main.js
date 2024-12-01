@@ -7,8 +7,10 @@
  * @property {Set<number>} matchedPairs - Indices of matched word pairs
  * @property {WordPair[]} wordPairs - All available word pairs
  * @property {number} timeRemaining - How much time is left on the timer
+ * @property {number} currentRound - The current (zero-based) round
  * @property {number} WORDS_PER_GAME - Number of word pairs per game
  * @property {number} TIMER_DURATION - How long each student has to find matches
+ * @property {number} ROUNDS_PER_GAME - The number of rounds per game
  */
 
 let timerInterval = null;
@@ -41,8 +43,10 @@ const initialState = {
   matchedPairs: new Set(),
   wordPairs: [],
   timeRemaining: 0,
+  currentRound: 0,
   WORDS_PER_GAME: 9,
-  TIMER_DURATION: 5,
+  TIMER_DURATION: 15,
+  ROUNDS_PER_GAME: 2,
 };
 
 // Core game state updates (pure functions)
@@ -281,6 +285,20 @@ const updateUI = {
 let gameState = { ...initialState };
 
 /**
+ * Advances to the next round
+ * @param {GameState} state - Current game state
+ * @returns {GameState} Updated state for next round
+ */
+const advanceRound = (state) => {
+  return {
+    ...state,
+    currentRound: state.currentRound + 1,
+    matchedPairs: new Set(),
+    selectedCards: [],
+  };
+};
+
+/**
  * Creates a new game card element
  * @param {string} word - Word to display on card
  * @param {number} index - Card index
@@ -306,24 +324,52 @@ const createCard = (word, index, isEnglish) => {
 
     if (gameState.selectedCards.length === 2) {
       const matchState = checkMatch(gameState);
+      const boardIsFinished = matchState.matchedPairs.size === gameState.WORDS_PER_GAME;
+      const gameOver = matchState.currentRound >= gameState.ROUNDS_PER_GAME - 1 && boardIsFinished;
 
       if (matchState.matchedPairs.size > gameState.matchedPairs.size) {
+        // Handle successful match
         updateUI.matchedPair(gameState.selectedCards);
         updateUI.score(
           gameState.currentTeam,
           matchState.scores[`team${gameState.currentTeam}`]
         );
 
-        if (matchState.matchedPairs.size === gameState.WORDS_PER_GAME) {
+        if (gameOver) {
+          // Handle game over
           const winner =
             matchState.scores.team1 > matchState.scores.team2
               ? "Team 1"
               : matchState.scores.team1 < matchState.scores.team2
               ? "Team 2"
               : "It's a tie";
+          stopTimer();
           setTimeout(() => alert(`Game Over! ${winner} wins!`), 500);
+        } else if (boardIsFinished) {
+          // Handle round completion
+          stopTimer();
+          const nextRoundState = advanceRound(matchState);
+
+          // Show round transition message
+          const roundMessage = `Round ${nextRoundState.currentRound + 1} of ${nextRoundState.ROUNDS_PER_GAME}`;
+          document.getElementById("currentRound").textContent = roundMessage;
+
+          setTimeout(() => {
+            // Reset timer for new round
+            const stateWithResetTimer = switchTeam(resetTimer(nextRoundState));
+            // Setup new board and update global state after board is set up
+            setupNewBoard(stateWithResetTimer);
+
+            gameState = {
+              ...stateWithResetTimer,
+              matchedPairs: new Set(), // Ensure matchedPairs is empty for new round
+              selectedCards: []
+            };
+            updateUI.teamTurn(gameState.currentTeam);
+          }, 1000);
         }
       } else {
+        // Handle unsuccessful match
         gameState.selectedCards.forEach((card) =>
           updateUI.cardSelection(card, false)
         );
@@ -338,24 +384,31 @@ const createCard = (word, index, isEnglish) => {
 };
 
 /**
- * Sets up a new game
- * @param {WordPair[]} [wordPairs=[]] - Optional word pairs to use
+ * Sets up a new game board without resetting scores or round
+ * @param {GameState} state - Current game state
  */
-const setupNewGame = (wordPairs = []) => {
-  gameState = {
-    ...initialState,
-    wordPairs,
-    timeRemaining: gameState.TIMER_DURATION,
+const setupNewBoard = (state) => {
+  // Ensure we're working with a clean state
+  state = {
+    ...state,
+    matchedPairs: new Set(),
+    selectedCards: []
   };
-  updateUI.resetGame();
 
-  const allPairs = wordPairs.length ? wordPairs : samplePairs;
-  const currentGamePairs = getRandomPairs(allPairs, gameState.WORDS_PER_GAME);
+  const currentGamePairs = getRandomPairs(
+    state.wordPairs.length ? state.wordPairs : samplePairs,
+    state.WORDS_PER_GAME
+  );
 
+  // Clear existing cards
+  document.getElementById("englishGrid").innerHTML = "";
+  document.getElementById("translationGrid").innerHTML = "";
+
+  // Create new cards for both sides
   ["english", "translation"].forEach((side, sideIndex) => {
     const grid = document.getElementById(`${side}Grid`);
     const shuffledIndices = shuffleArray([
-      ...Array(gameState.WORDS_PER_GAME).keys(),
+      ...Array(state.WORDS_PER_GAME).keys(),
     ]);
 
     shuffledIndices.forEach((index) => {
@@ -363,6 +416,25 @@ const setupNewGame = (wordPairs = []) => {
       grid.appendChild(createCard(word, index, side === "english"));
     });
   });
+};
+
+/**
+ * Sets up a new game
+ * @param {WordPair[]} [wordPairs=[]] - Optional word pairs to use
+ */
+const setupNewGame = (wordPairs = []) => {
+  gameState = {
+    ...initialState,
+    wordPairs,
+    timeRemaining: initialState.TIMER_DURATION,
+  };
+
+  updateUI.resetGame();
+  setupNewBoard(gameState);
+
+  // Initialize round display
+  const roundMessage = `Round 1 of ${gameState.ROUNDS_PER_GAME}`;
+  document.getElementById("currentRound").textContent = roundMessage;
 };
 
 // Event Listeners
