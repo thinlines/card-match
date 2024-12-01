@@ -6,8 +6,12 @@
  * @property {HTMLElement[]} selectedCards - Currently selected cards
  * @property {Set<number>} matchedPairs - Indices of matched word pairs
  * @property {WordPair[]} wordPairs - All available word pairs
+ * @property {number} timeRemaining - How much time is left on the timer
  * @property {number} WORDS_PER_GAME - Number of word pairs per game
+ * @property {number} TIMER_DURATION - How long each student has to find matches
  */
+
+let timerInterval = null;
 
 // Sample word pairs for initial demo (Portuguese-English)
 /** @type {WordPair[]} */
@@ -36,7 +40,9 @@ const initialState = {
   selectedCards: [],
   matchedPairs: new Set(),
   wordPairs: [],
-  WORDS_PER_GAME: 9
+  timeRemaining: 0,
+  WORDS_PER_GAME: 9,
+  TIMER_DURATION: 5
 };
 
 // Core game state updates (pure functions)
@@ -52,6 +58,7 @@ const initialState = {
 const selectCard = (state, card) => {
   const cardIndex = parseInt(card.dataset.index);
   const cardSide = card.dataset.side;
+  if (!timerInterval) startTimer();
   if (state.selectedCards.length === 1) {
     previousSelection = state.selectedCards[0];
     if (cardSide === previousSelection.dataset.side) {
@@ -100,15 +107,6 @@ const checkMatch = (state) => {
   };
 };
 
-/**
-* Switches to the next team
-* @param {GameState} state - Current game state
-* @returns {GameState} Updated game state with next team
-*/
-const switchTeam = (state) => ({
-  ...state,
-  currentTeam: getNextTeam(state.currentTeam)
-});
 
 // Game utilities (pure functions)
 /**
@@ -153,7 +151,70 @@ const parseCsvContent = content =>
 */
 const getNextTeam = (currentTeam) => currentTeam === 1 ? 2 : 1;
 
-/** @type {Object} UI update functions */
+/**
+* Switches to the next team
+* @param {GameState} state - Current game state
+* @returns {GameState} Updated game state with next team
+*/
+const switchTeam = (state) => ({
+  ...state,
+  currentTeam: getNextTeam(state.currentTeam)
+});
+
+/**
+ * Starts the timer, setting an interval which modifies gameState directly
+ */
+const startTimer = () => {
+  timerInterval = setInterval(() => {
+    gameState.timeRemaining--;
+    updateUI.timer(gameState.timeRemaining);
+    if (gameState.timeRemaining <= 0) {
+      gameState = switchTeam(resetTimer(gameState));
+      updateUI.teamTurn(gameState.currentTeam);
+    }
+  }, 1000);
+}
+
+/**
+ * Stops the timer, clearing the interval and resetting it to null
+ */
+const stopTimer = () => {
+  clearInterval(timerInterval)
+  timerInterval = null;
+}
+
+/**
+ * Stops timer and resets to initial value
+ * @param {GameState} state - Current game state
+ * @returns {GameState} with reset time
+ */
+const resetTimer = (state) => {
+  stopTimer();
+  updateUI.timer(state.TIMER_DURATION);
+  return {...state, timeRemaining: state.TIMER_DURATION}
+}
+
+/**
+ * Formats the time in the desired way
+ */
+const formatTime = (time) => {
+  minutes = String(Math.floor(time / 60)).padStart(2, "0");
+  seconds = String(time % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
+/**
+ * UI update functions
+ * @typedef {Object} UIUpdate
+ * @property {function(HTMLElement, boolean): void} cardSelection Updates card selection visual state
+ * @property {function(HTMLElement[]): void} matchedPair Updates matched cards visual state
+ * @property {function(1|2): void} teamTurn Updates current team turn indicator
+ * @property {function(1|2, number): void} score Updates team score display
+ * @property {function(): void} resetGame Resets game UI to initial state
+ * @property {function(number): void} timer Updates the timer display
+ */
+
+/** @type {UIUpdate} */
 const updateUI = {
   /**
    * Updates card selection visual state
@@ -203,6 +264,11 @@ const updateUI = {
       document.querySelector('.team-score.active')?.classList.remove('active');
       document.querySelector('.team1').classList.add('active');
       document.getElementById('currentTeam').textContent = "Team 1's Turn";
+      document.getElementById('timer').textContent = formatTime(gameState.TIMER_DURATION);
+  },
+
+  timer: (timeRemaining) => {
+    document.getElementById('timer').textContent = formatTime(timeRemaining);
   }
 };
 
@@ -230,6 +296,8 @@ const createCard = (word, index, isEnglish) => {
 
       gameState = newState;
       updateUI.cardSelection(card, true);
+
+      if (!timerInterval) startTimer();
 
       if (gameState.selectedCards.length === 2) {
           const matchState = checkMatch(gameState);
@@ -261,7 +329,7 @@ const createCard = (word, index, isEnglish) => {
 * @param {WordPair[]} [wordPairs=[]] - Optional word pairs to use
 */
 const setupNewGame = (wordPairs = []) => {
-  gameState = { ...initialState, wordPairs };
+  gameState = { ...initialState, wordPairs, timeRemaining: gameState.TIMER_DURATION };
   updateUI.resetGame();
 
   const allPairs = wordPairs.length ? wordPairs : samplePairs;
