@@ -56,104 +56,107 @@ const initialState = {
 let settingsState = {
   mode: "team",
   rounds: 2,
-  timer: 15
+  timer: 15,
 };
 
 // DOM Elements
-const modal = document.getElementById('settingsModal');
-const settingsButton = document.getElementById('settingsButton');
-const saveButton = document.getElementById('saveSettings');
-const cancelButton = document.getElementById('cancelSettings');
-const roundsDisplay = document.getElementById('roundsDisplay');
-const timerDisplay = document.getElementById('timerDisplay');
+const modal = document.getElementById("settingsModal");
+const settingsButton = document.getElementById("settingsButton");
+const saveButton = document.getElementById("saveSettings");
+const cancelButton = document.getElementById("cancelSettings");
+const roundsDisplay = document.getElementById("roundsDisplay");
+const timerDisplay = document.getElementById("timerDisplay");
 
 // Settings constraints
 const constraints = {
   rounds: { min: 1, max: 5, step: 1 },
-  timer: { min: 10, max: 120, step: 5 }
+  timer: { min: 10, max: 120, step: 5 },
 };
 
 // Event Handlers
-settingsButton.addEventListener('click', () => {
+settingsButton.addEventListener("click", () => {
   // Update displays with current values from gameState
   settingsState = {
-      rounds: gameState.ROUNDS_PER_GAME,
-      timer: gameState.TIMER_DURATION
+    rounds: gameState.ROUNDS_PER_GAME,
+    timer: gameState.TIMER_DURATION,
   };
   updateDisplays();
-  modal.style.display = 'block';
+  modal.style.display = "block";
 });
 
-saveButton.addEventListener('click', () => {
+saveButton.addEventListener("click", () => {
   // Update gameState with new settings
   gameState = {
-      ...gameState,
-      ROUNDS_PER_GAME: settingsState.rounds,
-      TIMER_DURATION: settingsState.timer,
-      timeRemaining: settingsState.timer,
-      mode: settingsState.mode,
-
+    ...gameState,
+    ROUNDS_PER_GAME: settingsState.rounds,
+    TIMER_DURATION: settingsState.timer,
+    timeRemaining: settingsState.timer,
+    mode: settingsState.mode,
   };
 
   // Update UI
   updateUI.timer(gameState.timeRemaining);
-  const roundMessage = `Round ${gameState.currentRound + 1} of ${gameState.ROUNDS_PER_GAME}`;
+  const roundMessage = `Round ${gameState.currentRound + 1} of ${
+    gameState.ROUNDS_PER_GAME
+  }`;
   document.getElementById("currentRound").textContent = roundMessage;
 
   updateUI.teamFeatures(gameState.mode === "team");
 
-  modal.style.display = 'none';
+  modal.style.display = "none";
 });
 
-cancelButton.addEventListener('click', () => {
-  modal.style.display = 'none';
+cancelButton.addEventListener("click", () => {
+  modal.style.display = "none";
 });
 
 // Close modal if clicking outside
-modal.addEventListener('click', (e) => {
+modal.addEventListener("click", (e) => {
   if (e.target === modal) {
-      modal.style.display = 'none';
+    modal.style.display = "none";
   }
 });
 
 // Handle number controls
-document.querySelectorAll('.control-btn').forEach(button => {
-  button.addEventListener('click', () => {
-      const setting = button.dataset.setting;
-      const isPlus = button.classList.contains('plus');
-      const { min, max, step } = constraints[setting];
+document.querySelectorAll(".control-btn").forEach((button) => {
+  button.addEventListener("click", () => {
+    const setting = button.dataset.setting;
+    const isPlus = button.classList.contains("plus");
+    const { min, max, step } = constraints[setting];
 
-      let newValue = settingsState[setting];
-      if (isPlus) {
-          newValue = Math.min(newValue + step, max);
-      } else {
-          newValue = Math.max(newValue - step, min);
-      }
+    let newValue = settingsState[setting];
+    if (isPlus) {
+      newValue = Math.min(newValue + step, max);
+    } else {
+      newValue = Math.max(newValue - step, min);
+    }
 
-      settingsState[setting] = newValue;
-      updateDisplays();
+    settingsState[setting] = newValue;
+    updateDisplays();
   });
 });
 
-document.querySelectorAll('.mode-btn').forEach((button) => {
-  button.addEventListener('click', () => {
-    const isSelected = button.classList.contains('active')
+document.querySelectorAll(".mode-btn").forEach((button) => {
+  button.addEventListener("click", () => {
+    const isSelected = button.classList.contains("active");
     if (!isSelected) {
       updateUI.mode(button);
       settingsState.mode = button.dataset.mode;
       // Toggle visibility of team settings
-      const modalContent = document.querySelector('.modal-content');
-      modalContent.classList.toggle('individual-mode', settingsState.mode === 'individual');
+      const modalContent = document.querySelector(".modal-content");
+      modalContent.classList.toggle(
+        "individual-mode",
+        settingsState.mode === "individual"
+      );
     }
-  })
-})
+  });
+});
 
 // Update display values
 function updateDisplays() {
   roundsDisplay.textContent = settingsState.rounds;
   timerDisplay.textContent = settingsState.timer;
 }
-
 
 // Core game state updates (pure functions)
 
@@ -284,7 +287,9 @@ const startTimer = () => {
     gameState.timeRemaining--;
     updateUI.timer(gameState.timeRemaining);
     if (gameState.timeRemaining <= 0) {
-      gameState.selectedCards.forEach((card) => updateUI.cardSelection(card, false));
+      gameState.selectedCards.forEach((card) =>
+        updateUI.cardSelection(card, false)
+      );
       gameState = switchTeam(resetTimer(gameState));
       updateUI.teamTurn(gameState.currentTeam);
     }
@@ -348,15 +353,17 @@ const updateUI = {
    * @param {HTMLElement} button the mode button that was clicked
    */
   mode: (button) => {
-    document.querySelectorAll('.mode-btn').forEach((one) => one.classList.remove('active'))
-    button.classList.toggle('active', true)
+    document
+      .querySelectorAll(".mode-btn")
+      .forEach((one) => one.classList.remove("active"));
+    button.classList.toggle("active", true);
   },
 
   teamFeatures: (shouldShow) => {
     const shouldHide = !shouldShow;
-    document.querySelectorAll('.team').forEach(
-      (ele) => ele.classList.toggle('hidden', shouldHide)
-    );
+    document
+      .querySelectorAll(".team")
+      .forEach((ele) => ele.classList.toggle("hidden", shouldHide));
   },
 
   /**
@@ -453,8 +460,11 @@ const createCard = (word, index, isEnglish) => {
 
     if (gameState.selectedCards.length === 2) {
       const matchState = checkMatch(gameState);
-      const boardIsFinished = matchState.matchedPairs.size === gameState.WORDS_PER_GAME;
-      const gameOver = matchState.currentRound >= gameState.ROUNDS_PER_GAME - 1 && boardIsFinished;
+      const boardIsFinished =
+        matchState.matchedPairs.size === gameState.WORDS_PER_GAME;
+      const gameOver =
+        matchState.currentRound >= gameState.ROUNDS_PER_GAME - 1 &&
+        boardIsFinished;
 
       // Inside the card click event listener, replace the if (matchState.matchedPairs.size > gameState.matchedPairs.size) block with:
 
@@ -491,19 +501,23 @@ const createCard = (word, index, isEnglish) => {
             const nextRoundState = advanceRound(matchState);
 
             // Show round transition message
-            const roundMessage = `Round ${nextRoundState.currentRound + 1} of ${nextRoundState.ROUNDS_PER_GAME}`;
+            const roundMessage = `Round ${nextRoundState.currentRound + 1} of ${
+              nextRoundState.ROUNDS_PER_GAME
+            }`;
             document.getElementById("currentRound").textContent = roundMessage;
 
             setTimeout(() => {
               // Reset timer for new round
-              const stateWithResetTimer = switchTeam(resetTimer(nextRoundState));
+              const stateWithResetTimer = switchTeam(
+                resetTimer(nextRoundState)
+              );
               // Setup new board and update global state after board is set up
               setupNewBoard(stateWithResetTimer);
 
               gameState = {
                 ...stateWithResetTimer,
                 matchedPairs: new Set(),
-                selectedCards: []
+                selectedCards: [],
               };
               updateUI.teamTurn(gameState.currentTeam);
             }, 1000);
@@ -512,7 +526,9 @@ const createCard = (word, index, isEnglish) => {
             const nextRoundState = advanceRound(matchState);
 
             // Show round transition message
-            const roundMessage = `Round ${nextRoundState.currentRound + 1} of ${nextRoundState.ROUNDS_PER_GAME}`;
+            const roundMessage = `Round ${nextRoundState.currentRound + 1} of ${
+              nextRoundState.ROUNDS_PER_GAME
+            }`;
             document.getElementById("currentRound").textContent = roundMessage;
 
             setTimeout(() => {
@@ -520,7 +536,7 @@ const createCard = (word, index, isEnglish) => {
               gameState = {
                 ...nextRoundState,
                 matchedPairs: new Set(),
-                selectedCards: []
+                selectedCards: [],
               };
             }, 1000);
           }
@@ -549,7 +565,7 @@ const setupNewBoard = (state) => {
   state = {
     ...state,
     matchedPairs: new Set(),
-    selectedCards: []
+    selectedCards: [],
   };
 
   const currentGamePairs = getRandomPairs(
