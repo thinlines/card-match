@@ -2,7 +2,7 @@
 
 > A classroom game
 
-![Screenshot of the game](image.webp)
+![Screenshot of the game](screenshot.webp)
 
 ## How to play
 
