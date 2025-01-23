@@ -1,6 +1,6 @@
 # Card Match
 
-> A classroom game
+> An ESL classroom vocabulary matching game
 
 ![Screenshot of the game](screenshot.webp)
 
