@@ -7,8 +7,8 @@
 ## How to play
 
 Match the English cards with the translations or definitions in the native language.
-The game ends when all boards has been completely matched.
-The number of boards to play through is configurable.
+The game ends when all rounds are completed.
+The number of rounds is configurable.
 
 The default words are English and Portuguese.
 Upload your own words in `English,Translation` CSV format (no need to include the header).
