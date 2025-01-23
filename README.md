@@ -13,10 +13,10 @@ The number of boards to play through is configurable.
 The default words are English and Portuguese.
 Upload your own words in `English,Translation` CSV format (no need to include the header).
 
-Comes with both a team mode and a practice mode!
-In team mode, players can match as many word pairs as they can within the time limit.
+This game comes with both a team mode and a practice mode!
+In team mode, players match as many word pairs as they can within the time limit.
 After the time limit is reached, teams switch.
-If you have a blackboard or something else to write on, you can also just use practice mode and keep score manually.
+If you have a blackboard or something else to write on, you can also use practice mode and keep score manually.
 
 ## Disclaimers
 
